@@ -1,2 +1,3 @@
 data/*.parquet
 .venv/
+Consumer/__pycache__

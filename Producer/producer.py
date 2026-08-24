@@ -61,12 +61,8 @@ for start in range(0, len(df), BATCH_SIZE):
         )
 
         print(f"Sent: {event['event_id']}")
-
         time.sleep(EVENT_DELAY)
 
     producer.flush()
-
-
 producer.close()
-
 print("Streaming completed.")

@@ -8,7 +8,6 @@ producer = KafkaProducer(
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
-
 def send_to_dlq(event, reason):
     dlq_event = {
         "event": event,
@@ -16,8 +15,4 @@ def send_to_dlq(event, reason):
     }
 
     producer.send(TOPIC_NAME, value=dlq_event).get(timeout=10)
-
-    print(
-        f"⚠️ Sent to DLQ: "
-        f"{event.get('event_id')} | {reason}"
-    )
+    print(f"Sent to DLQ: {event.get('event_id')} | {reason}")
