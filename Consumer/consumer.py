@@ -1,12 +1,13 @@
 import json
-import pandas as pd
 from kafka import KafkaConsumer
-
+from validation import validation
+from transform import transform_event
+from database import create_table, insert_event
+from dlq_producer import send_to_dlq
 
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 TOPIC_NAME = "taxi_trips"
-GROUP_ID = "taxi-transformation-test"
-
+GROUP_ID = "taxi-dlq-test"
 
 consumer = KafkaConsumer(
     TOPIC_NAME,
@@ -17,79 +18,30 @@ consumer = KafkaConsumer(
     value_deserializer=lambda value: json.loads(value.decode("utf-8"))
 )
 
-def validation(event):
-    """
-    Validate NYC Taxi Event
-    """
-    # 1. event_id
-    if not event.get("event_id"):
-        return False, "Missing event_id"
-
-    # 2. passenger_count
-    if event.get("passenger_count") is None:
-        return False, "Missing passenger_count"
-    if event["passenger_count"] <= 0:
-        return False, "passenger_count must be > 0"
-
-    # 3. trip_distance
-    if event.get("trip_distance") is None:
-        return False, "Missing trip_distance"
-    if event["trip_distance"] <= 0:
-        return False, "trip_distance must be > 0"
-
-    # 4. fare_amount
-    if event.get("fare_amount") is None:
-        return False, "Missing fare_amount"
-    if event["fare_amount"] < 0:
-        return False, "fare_amount must be >= 0"
-
-    # 5. total_amount
-    if event.get("total_amount") is None:
-        return False, "Missing total_amount"
-    if event["total_amount"] < 0:
-        return False, "total_amount must be >= 0"
-
-    # 6. datetime
-    if not event.get("pickup_datetime"):
-        return False, "Missing pickup_datetime"
-    if not event.get("dropoff_datetime"):
-        return False, "Missing dropoff_datetime"
-    if event["pickup_datetime"] >= event["dropoff_datetime"]:
-        return False, "pickup_datetime must be before dropoff_datetime"
-
-    return True, None
-
-def transform_event(event):
-    pickup = pd.to_datetime(event["pickup_datetime"])
-    dropoff = pd.to_datetime(event["dropoff_datetime"])
-
-    trip_duration_minutes = (
-        dropoff - pickup
-    ).total_seconds() / 60
-
-    fare_per_mile = (
-        event["fare_amount"] / event["trip_distance"]
-    )
-
-    return {
-        **event,
-        "trip_duration_minutes": trip_duration_minutes,
-        "fare_per_mile": fare_per_mile
-    }
-
+create_table()
 print("Consumer started...")
 print(f"Listening to topic: {TOPIC_NAME}")
+total_events = 0
+valid_events = 0
+invalid_events = 0
 
+try:
+    for message in consumer:
+        total_events += 1
+        event = message.value
+        is_valid, reason = validation(event)
+        if not is_valid:
+            invalid_events += 1
+            print(f"Invalid event {event.get('event_id')}: {reason}")
+            send_to_dlq(event, reason)
+            continue
+        valid_events += 1
+        transformed_event = transform_event(event)
+        insert_event(transformed_event)
+        print(f"Valid and Saved to PostgreSQL: {transformed_event['event_id']}")
 
-for message in consumer:
-    event = message.value
-    is_valid, reason = validation(event)
-    if not is_valid:
-        print(f"Invalid event {event.get('event_id')}: {reason}")
-        continue
-
-    transformed_event = transform_event(event)
-
-    print(f"Transformed event: {transformed_event['event_id']}")
-    print(f"Duration: {transformed_event['trip_duration_minutes']:.2f} minutes")
-    print(f"Fare/mile: ${transformed_event['fare_per_mile']:.2f}")
+except KeyboardInterrupt:
+    print("\nConsumer stopped.")
+    print(f"Total events   : {total_events}")
+    print(f"Valid events   : {valid_events}")
+    print(f"Invalid events : {invalid_events}")
