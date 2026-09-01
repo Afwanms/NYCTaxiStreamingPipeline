@@ -12,8 +12,6 @@ FILE_PATH = "data/yellow_tripdata_2026-01.parquet"
 
 BATCH_SIZE = 100
 EVENT_DELAY = 0.1
-MAX_RECORDS = 1_000
-
 
 producer = KafkaProducer(
     bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
@@ -38,7 +36,6 @@ def create_event(row):
 
 
 df = pd.read_parquet(FILE_PATH)
-df = df.head(MAX_RECORDS)
 
 print(f"Total records: {len(df):,}")
 
