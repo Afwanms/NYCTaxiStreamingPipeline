@@ -52,9 +52,13 @@ NYCStreamingPipeline/
 │   └── dashboard.pbix
 │
 ├── Image/
-│   ├── kafka.png
-│   ├── postgresql.png
-│   └── powerbi.png
+│   ├── analytic-dashboard.png
+│   ├── dead-letter-queue.png
+│   ├── kafka-dashboard.png
+│   ├── kafka-topics.png
+│   ├── postgresql-output.png
+│   ├── tools.png
+│   └── workflow.png
 │
 ├── Notebooks
 │   └── explore_dataset.ipynb
@@ -73,4 +77,4 @@ NYCStreamingPipeline/
 ### PostgreSQL Output
 ![PostgreSQL Output](Image/postgresql-output.png)
 ### Power BI Dashboard
-![Dashboard](Image/dashboard.png)
+![Dashboard](Image/analytic-dashboard.png)
