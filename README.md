@@ -36,7 +36,11 @@ The pipeline reads NYC Yellow Taxi trip data from a Parquet dataset and simulate
 NYCStreamingPipeline/
 │
 ├── Consumer/
-│   └── consumer.py
+│   ├── consumer.py
+│   ├── database.py
+│   ├── dlq_producer.py
+│   ├── transform.py
+│   └── validation.py
 │
 ├── Producer/
 │   └── producer.py
@@ -44,16 +48,16 @@ NYCStreamingPipeline/
 ├── Data/
 │   └── yellow_tripdata_2026-01.parquet
 │
-├── Notebooks/
-│   └── analysis.ipynb
+├── Dashboard/
+│   └── dashboard.pbix
 │
-├── SQL/
-│   └── create_table.sql
-│
-├── Screenshots/
+├── Image/
 │   ├── kafka.png
 │   ├── postgresql.png
 │   └── powerbi.png
+│
+├── Notebooks
+│   └── explore_dataset.ipynb
 │
 ├── docker-compose.yml
 ├── requirements.txt
